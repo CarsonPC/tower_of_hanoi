@@ -3,8 +3,8 @@
 # what kind of dummy thought this was a good naming scheme...
 
 class Tower(object):
-    def __init__(self, address):
-        self.address = address
+    def __init__(self, label):
+        self.label = label
         self.population = []
 
     def add(self, b):
@@ -14,29 +14,23 @@ class Tower(object):
         self.population.pop()
 
     def top(self):
-        return self.population[len(self.population)-1].value
+        return self.population[len(self.population) - 1].value
 
-    def is_full_sorted(self):
+    def is_full_sorted(self, bfl):
         test = []
         for block in self.population:
             test.append(block.value)
-        if test == [0, 5, 4, 3, 2, 1]:
+        if test[1:] == bfl:
             return True
         else:
             return False
 
-    def is_sorted(self):
-        test = []
-        for block in self.population:
-            test.append(block.value)
-        test.remove(0)
-
-        if test == sorted(test, reverse = True):
-            return True
-        return False
+    def get_label(self):
+        return self.label
 
     def pop_to_string(self):
         return [l.get_value() for l in self.population]
+
 
 class Block(object):
     def __init__(self, value, t):
@@ -45,11 +39,11 @@ class Block(object):
         self.previous = t
         t.add(self)
 
-    def move_to(self, address):
+    def move_to(self, new_address):
         self.address.population.pop()
-        address.add(self)
+        new_address.add(self)
         self.previous = self.address
-        self.address = address
+        self.address = new_address
 
     def get_value(self):
         return self.value
@@ -61,62 +55,43 @@ class Block(object):
         return self.previous
 
 
-def full_sort(blocks, towers):
+def full_sort(blocks, towers, block_final_layout):
     b = 0
     # End condition of either of second towers being sorted
-    print('~~~~~~~~~~~~~~~~~~')
-    print("Tower A: ", tower_a.pop_to_string())
-    print("Tower B: ", tower_b.pop_to_string())
-    print("Tower C: ", tower_c.pop_to_string())
-    print('~~~~~~~~~~~~~~~~~~')
-    steps=0
-    while True:
+    steps = 0
+    while not towers[1].is_full_sorted(block_final_layout) and not towers[2].is_full_sorted(
+            block_final_layout):
         # If the current block is free on it's tower
-        blocks[b].get_value()
         if blocks[b].get_value() == blocks[b].address.top():
             for tower in towers:
                 # Don't allow hopping back and forth or staying in same spot
-                x = tower.address
-                y = blocks[b].get_address().address
-                z = blocks[b].get_previous().address
-                if tower.address != blocks[b].get_previous().address and tower.address != blocks[b].get_address().address:
+                if tower.get_label() != blocks[b].get_previous().get_label() and tower.get_label() != blocks[
+                    b].get_address().get_label():
                     # Make sure there is a valid move
-                    xx =tower.top()
-                    yy = blocks[b].get_value()
                     if tower.top() == 0 or blocks[b].get_value() < tower.top():
                         blocks[b].move_to(tower)
-                        steps = steps+1
-                        print('~~~~~~~~~~~~~~~~~~')
-                        print("Tower A: ", tower_a.pop_to_string())
-                        print("Tower B: ", tower_b.pop_to_string())
-                        print("Tower C: ", tower_c.pop_to_string())
-                        print('~~~~~~~~~~~~~~~~~~')
+                        steps = steps + 1
+
+                        for t in towers:
+                            print(t.pop_to_string())
+                        print("~~~~~~~~~~~~~~~~~~")
+
                         b = -1
 
                         break
-        if towers[1].is_full_sorted():
-            print(steps)
-            break
-        if towers[2].is_full_sorted():
-            print(steps)
-            break
-        b=b+1
+        b = b + 1
+    print("Iterations: {:d}".format(steps))
+
 
 # Towers of Hanoi
 if __name__ == '__main__':
-    tower_a = Tower('a')
-    tower_b = Tower('b')
-    tower_c = Tower('c')
+    block_limit = 5
+    tower_limit = 3
 
-    zero_a = Block(0, tower_a)
-    zero_b = Block(0, tower_b)
-    zero_c = Block(0, tower_c)
-    five = Block(5, tower_a)
-    four = Block(4, tower_a)
-    three = Block(3, tower_a)
-    two = Block(2, tower_a)
-    one = Block(1, tower_a)
+    towers = [Tower(i) for i in range(tower_limit)]
 
-    towers = [tower_a, tower_b, tower_c]
-    blocks = [five, four, three, two, one]
-    full_sort(blocks,towers)
+    for i in range(0, tower_limit):
+        Block(0, towers[i])
+    blocks = [Block(i, towers[0]) for i in range(block_limit, 0, -1)]
+    block_final_layout = [b.get_value() for b in blocks]
+    full_sort(blocks, towers, block_final_layout)
